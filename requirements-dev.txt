@@ -1,0 +1,25 @@
+-r requirements.txt
+
+pytest
+pytest-cov
+pytest-xdist
+pytest-sugar
+
+mock
+
+pylint
+flake8
+
+psycopg2
+pymysql
+
+flask
+
+tox
+yapf
+
+pep8
+virtualenv
+wheel
+
+sphinx
