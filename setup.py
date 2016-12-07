@@ -9,7 +9,7 @@ with io.open('README.rst') as f:
 
 setup(
     name='sqlbag',
-    version='0.1.1469279493',
+    version='0.1.1481109818',
     description='various snippets of SQL-related boilerplate',
     long_description=readme,
     author='Robert Lechte',
