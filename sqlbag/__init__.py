@@ -24,9 +24,12 @@ from .createdrop import \
     database_exists, create_database, \
     drop_database, temporary_database, can_select
 
-from . import pg
+try:
+    from . import pg
+except ImportError:
+    pg = None
 
-__all__ = [
+__all__ = (
     'C', 'get_inspector', 'S', 'raw_execute', 'load_sql_from_folder',
     'admin_db_connection', '_killquery', 'kill_other_connections', 'session',
     'quoted_identifier', 'DB_ERROR_TUPLE', 'raw_connection', 'copy_url',
@@ -35,4 +38,4 @@ __all__ = [
     'Base', 'metadata_from_session', 'database_exists', 'create_database',
     'drop_database', 'temporary_database', 'pg', 'ColumnInfo',
     'get_raw_autocommit_connection', 'can_select', 'sqlachanges'
-]
+)

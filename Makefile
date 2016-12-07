@@ -36,16 +36,9 @@ clean:
 	git clean -fXd
 	find . -name \*.pyc -delete
 
-
-fmt:
-	yapf --recursive --in-place sqlbag
-	yapf --recursive --in-place tests
-
-
 lint:
 	flake8 sqlbag
 	flake8 tests
-
 
 docs:
 	cd docs && make clean && make html
@@ -54,7 +47,16 @@ opendocs:
 	BROWSER=firefox python -c 'import os;import webbrowser;webbrowser.open_new_tab("file://" + os.getcwd() + "/docs/_build/html/index.html")'
 
 
-tidy: clean fmt lint
+tidy: clean lint
 
 
-all: clean fmt lint tox
+all: clean lint tox
+
+
+testpublish:
+	python setup.py register -r https://testpypi.python.org/pypi
+	python setup.py sdist bdist_wheel --universal upload -r https://testpypi.python.org/pypi
+
+publish:
+	python setup.py register
+	python setup.py sdist bdist_wheel --universal upload

@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
 
 import copy
+import getpass
 
 from sqlalchemy.sql import text
 
@@ -203,7 +204,11 @@ def admin_db_connection(db_url):
     dbtype = url.get_dialect().name
 
     if dbtype == 'postgresql':
-        url.database = 'template1'
+        url.database = ''
+
+        if not url.username:
+            url.username = getpass.getuser()
+
     elif not dbtype == 'sqlite':
         url.database = None
 
