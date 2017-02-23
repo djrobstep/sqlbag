@@ -1,11 +1,18 @@
-from sqlbag.flask import FS, session_setup
-
-s = FS('postgresql:///example')
-
+from sqlbag.flask import FS, session_setup, proxies
 from flask import Flask
-app = Flask(__name__)
 
-session_setup(app)
+
+s = proxies.s
+
+
+def get_app():
+    a = Flask(__name__)
+    a.s = FS('postgresql:///example', echo=True)
+    session_setup(a)
+    return a
+
+app = get_app()
+
 
 @app.route("/")
 def hello():

@@ -7,6 +7,9 @@ from flask import _app_ctx_stack
 
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy import create_engine
+from flask import current_app
+from werkzeug.local import LocalProxy
+
 
 FLASK_SCOPED_SESSION_MAKERS = []
 COMMIT_AFTER_REQUEST = []
@@ -78,3 +81,13 @@ def flask_smart_after_request(resp):
 def flask_smart_teardown_appcontext(exception=None):
     for scoped in FLASK_SCOPED_SESSION_MAKERS:
         scoped.remove()
+
+
+class Proxies(object):
+    def __getattr__(self, name):
+        def get_proxy():
+            return getattr(current_app, name)
+        return LocalProxy(get_proxy)
+
+
+proxies = Proxies()
