@@ -3,7 +3,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import random
 import string
-import pwd
+import getpass
 import os
 import tempfile
 import copy
@@ -140,7 +140,7 @@ def drop_database(db_url):
 
 
 def _current_username():
-    return pwd.getpwuid(os.getuid()).pw_name
+    return getpass.getuser()
 
 
 @contextmanager
