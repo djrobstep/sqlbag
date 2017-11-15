@@ -24,3 +24,5 @@ wheel
 
 pendulum
 pytz
+
+twine
