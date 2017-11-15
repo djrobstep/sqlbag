@@ -143,8 +143,19 @@ def _current_username():
     return getpass.getuser()
 
 
+def temporary_name(prefix='sqlbag_tmp_'):
+    random_letters = [
+        random.choice(string.ascii_lowercase)
+        for _
+        in range(10)
+    ]
+    rnd = ''.join(random_letters)
+    tempname = prefix + rnd
+    return tempname
+
+
 @contextmanager
-def temporary_database(dialect='postgresql', do_not_delete=False):
+def temporary_database(dialect='postgresql', do_not_delete=False, host=None):
     """
     Args:
         dialect(str): Type of database to create (either 'postgresql', 'mysql', or 'sqlite').
@@ -154,6 +165,9 @@ def temporary_database(dialect='postgresql', do_not_delete=False):
 
     PostgreSQL, MySQL/MariaDB, and SQLite are supported. This method's mysql creation code uses the pymysql driver, so make sure you have that installed.
     """
+
+    host = host or ''
+
     if dialect == 'sqlite':
         tmp = tempfile.NamedTemporaryFile(delete=False)
 
@@ -166,13 +180,15 @@ def temporary_database(dialect='postgresql', do_not_delete=False):
                 os.remove(tmp.name)
 
     else:
-        rnd = ''.join([random.choice(string.ascii_lowercase)
-                       for _ in range(10)])
-        tempname = 'sqlbag_tmp_' + rnd
+        tempname = temporary_name()
 
         current_username = _current_username()
 
-        url = '{}://{}@/{}'.format(dialect, current_username, tempname)
+        url = '{}://{}@{}/{}'.format(
+            dialect,
+            current_username,
+            host,
+            tempname)
 
         if url.startswith('mysql:'):
             url = url.replace('mysql:', 'mysql+pymysql:', 1)

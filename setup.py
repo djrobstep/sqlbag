@@ -9,7 +9,7 @@ with io.open('README.rst') as f:
 
 setup(
     name='sqlbag',
-    version='0.1.1487916199',
+    version='0.1.1510721564',
     url='https://github.com/djrobstep/sqlbag',
     description='various snippets of SQL-related boilerplate',
     long_description=readme,
@@ -25,8 +25,9 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha'
     ],
-    extras_require = {
+    extras_require={
         'pg': ['psycopg2'],
+        'pendulum': ['pendulum', 'relativedelta'],
         'maria': ['pymysql']
     }
 )

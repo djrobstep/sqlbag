@@ -139,7 +139,7 @@ def S(*args, **kwargs):
         session = Session()
         yield session
         session.commit()
-    except:
+    except Exception:
         session.rollback()
         raise
     finally:
@@ -191,7 +191,7 @@ def C(*args, **kwargs):
     try:
         yield c
         trans.commit()
-    except:
+    except Exception:
         trans.rollback()
         raise
     finally:

@@ -71,7 +71,6 @@ def flask_smart_after_request(resp):
 
     for do_commit, scoped in \
             zip(COMMIT_AFTER_REQUEST, FLASK_SCOPED_SESSION_MAKERS):
-
         if do_commit:
             if not is_error:
                 scoped.commit()
