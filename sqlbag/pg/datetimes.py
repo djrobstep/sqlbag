@@ -1,7 +1,6 @@
 
 import pendulum
 
-from pendulum.pendulum import Pendulum
 from datetime import tzinfo, timedelta, datetime
 from dateutil.relativedelta import relativedelta
 from psycopg2.extensions import new_type, register_adapter, \
@@ -9,6 +8,8 @@ from psycopg2.extensions import new_type, register_adapter, \
 
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
+
+PENDULUM_DATETIME_TYPE = type(pendulum.now())
 
 
 # A UTC class.
@@ -86,7 +87,7 @@ def tokens_iter(s):
     while tokens:
         if ':' in tokens[0]:
             x, tokens = tokens[0], tokens[1:]
-            t = pendulum.parse(x).time()
+            t = pendulum.parse(x, strict=False).time()
 
             yield {
                 'hours': x.startswith('-') and -t.hour or t.hour,
@@ -171,7 +172,7 @@ def cast_interval(value, cur):
 
 
 def adapt_datetime(dt):
-    if not isinstance(dt, Pendulum):
+    if not isinstance(dt, PENDULUM_DATETIME_TYPE):
         dt = pendulum.instance(dt)
     in_utc = dt.in_timezone('UTC')
     return AsIs("'{}'".format(in_utc))
