@@ -9,7 +9,7 @@ from psycopg2.extensions import new_type, register_adapter, \
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
 
-PENDULUM_DATETIME_TYPE = type(pendulum.now())
+PENDULUM_DATETIME_TYPE = type(pendulum.now('UTC'))
 
 
 # A UTC class.
