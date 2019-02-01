@@ -1,22 +1,16 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
-
 from collections import OrderedDict
 
-from sqlalchemy import inspect
-
+import six
+import sqlalchemy.engine.url
 import sqlalchemy.exc
 import sqlalchemy.orm
-import sqlalchemy.engine.url
-
 import sqlalchemy.orm.session
-
+from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import declared_attr
-
 from sqlalchemy.schema import MetaData
-import six
 
 
 def metadata_from_session(s):
@@ -44,14 +38,15 @@ class Base(object):
         """Convert CamelCase class name to underscores_between_words
         table name."""
         name = cls.__name__
-        return (name[0].lower() + re.sub(
-            r'([A-Z])', lambda m: "_" + m.group(0).lower(), name[1:]))
+        return name[0].lower() + re.sub(
+            r"([A-Z])", lambda m: "_" + m.group(0).lower(), name[1:]
+        )
 
     def __repr__(self):
         items = row2dict(self).items()
         return "{0}({1})".format(
-            self.__class__.__name__,
-            ', '.join(['{0}={1!r}'.format(*_) for _ in items]))
+            self.__class__.__name__, ", ".join(["{0}={1!r}".format(*_) for _ in items])
+        )
 
     @property
     def _sqlachanges(self):
@@ -78,7 +73,8 @@ def sqlachanges(sa_object):
     attrs = inspect(sa_object).attrs
     return {
         a.key: list(reversed(a.history.sum()))
-        for a in attrs if len(a.history.sum()) > 1
+        for a in attrs
+        if len(a.history.sum()) > 1
     }
 
 
@@ -86,8 +82,9 @@ def row2dict(sa_object):
     """
     Converts a mapped object into an OrderedDict.
     """
-    return OrderedDict((pname, getattr(sa_object, pname))
-                       for pname in get_properties(sa_object))
+    return OrderedDict(
+        (pname, getattr(sa_object, pname)) for pname in get_properties(sa_object)
+    )
 
 
 def get_properties(instance):

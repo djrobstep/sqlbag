@@ -1,15 +1,13 @@
+from datetime import datetime, timedelta, tzinfo
 
 import pendulum
-
-from datetime import tzinfo, timedelta, datetime
 from dateutil.relativedelta import relativedelta
-from psycopg2.extensions import new_type, register_adapter, \
-    register_type, AsIs
+from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
 
-PENDULUM_DATETIME_TYPE = type(pendulum.now('UTC'))
+PENDULUM_DATETIME_TYPE = type(pendulum.now("UTC"))
 
 
 # A UTC class.
@@ -30,35 +28,20 @@ utc = UTC()
 
 
 def vanilla(pendulum_dt):
-    x = pendulum_dt.in_timezone('UTC')
+    x = pendulum_dt.in_timezone("UTC")
 
     return datetime(
-        x.year,
-        x.month,
-        x.day,
-        x.hour,
-        x.minute,
-        x.second,
-        x.microsecond,
-        tzinfo=utc)
+        x.year, x.month, x.day, x.hour, x.minute, x.second, x.microsecond, tzinfo=utc
+    )
 
 
 def naive(pendulum_dt):
     x = pendulum_dt
-
-    return datetime(
-        x.year,
-        x.month,
-        x.day,
-        x.hour,
-        x.minute,
-        x.second,
-        x.microsecond,
-        tzinfo=None)
+    return x.naive()
 
 
 def utcnow():
-    return pendulum.now('UTC')
+    return pendulum.now("UTC")
 
 
 def localnow():
@@ -69,7 +52,7 @@ def parse_time_of_day(x):
     return pendulum.parse(x).time()
 
 
-def combine_date_and_time(date, time, timezone='UTC'):
+def combine_date_and_time(date, time, timezone="UTC"):
     naive = datetime.combine(date, time)
     return pendulum.instance(naive, tz=timezone)
 
@@ -85,19 +68,19 @@ def tokens_iter(s):
     tokens = s.split()
 
     while tokens:
-        if ':' in tokens[0]:
+        if ":" in tokens[0]:
             x, tokens = tokens[0], tokens[1:]
             t = pendulum.parse(x, strict=False).time()
 
             yield {
-                'hours': x.startswith('-') and -t.hour or t.hour,
-                'minutes': t.minute,
-                'seconds': t.second,
-                'microseconds': t.microsecond
+                "hours": x.startswith("-") and -t.hour or t.hour,
+                "minutes": t.minute,
+                "seconds": t.second,
+                "microseconds": t.microsecond,
             }
         else:
             x, tokens = tokens[:2], tokens[2:]
-            x[1] = x[1].replace('mons', 'months')
+            x[1] = x[1].replace("mons", "months")
             yield {x[1]: int(x[0])}
 
 
@@ -106,31 +89,25 @@ def parse_interval_values(s):
     [values.update(_) for _ in tokens_iter(s)]
 
     for k in values:
-        if not k.endswith('s'):
-            values[k + 's'] = values.pop(k)
+        if not k.endswith("s"):
+            values[k + "s"] = values.pop(k)
     return values
 
 
 def format_relativedelta(rd):
     RELATIVEDELTA_FIELDS = [
-        'years',
-        'months',
-        'days',
-        'hours',
-        'minutes',
-        'seconds',
-        'microseconds'
+        "years",
+        "months",
+        "days",
+        "hours",
+        "minutes",
+        "seconds",
+        "microseconds",
     ]
 
-    fields = [
-        (k, getattr(rd, k))
-        for k in RELATIVEDELTA_FIELDS
-        if getattr(rd, k)
-    ]
+    fields = [(k, getattr(rd, k)) for k in RELATIVEDELTA_FIELDS if getattr(rd, k)]
 
-    s = ' '.join(
-        '{} {}'.format(v, k) for k, v in fields
-    )
+    s = " ".join("{} {}".format(v, k) for k, v in fields)
 
     return s
 
@@ -143,13 +120,13 @@ class sqlbagrelativedelta(relativedelta):
 def cast_timestamp(value, cur):
     if value is None:
         return None
-    return naive(pendulum.parse(value))
+    return pendulum.parse(value).naive()
 
 
 def cast_timestamptz(value, cur):
     if value is None:
         return None
-    return pendulum.parse(value).in_timezone('UTC')
+    return pendulum.parse(value).in_timezone("UTC")
 
 
 def cast_time(value, cur):
@@ -174,7 +151,7 @@ def cast_interval(value, cur):
 def adapt_datetime(dt):
     if not isinstance(dt, PENDULUM_DATETIME_TYPE):
         dt = pendulum.instance(dt)
-    in_utc = dt.in_timezone('UTC')
+    in_utc = dt.in_timezone("UTC")
     return AsIs("'{}'".format(in_utc))
 
 

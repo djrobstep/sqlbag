@@ -26,3 +26,5 @@ pendulum
 pytz
 
 twine
+black
+isort

@@ -1,12 +1,11 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import sys
 
-from sqlbag import raw_connection
+import six
 from psycopg2 import errorcodes as pgerrorcodes
 
-import six
+from sqlbag import raw_connection
 
 if not six.PY2:
     unicode = str

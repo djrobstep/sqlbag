@@ -1,37 +1,42 @@
 """Miscellaneous helpful stuff for working with the SQLAlchemy core."""
 
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import copy
 import getpass
-
-from sqlalchemy.sql import text
-
 from contextlib import contextmanager
 
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.pool import NullPool
-from sqlalchemy import create_engine
-
+import sqlalchemy.engine.url
 import sqlalchemy.exc
 import sqlalchemy.orm
-import sqlalchemy.engine.url
+import sqlalchemy.orm.session
 from six import string_types
-
+from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import make_url
-import sqlalchemy.orm.session
+from sqlalchemy.orm import scoped_session, sessionmaker
+from sqlalchemy.pool import NullPool
+from sqlalchemy.sql import text
 
 from .util_mysql import MYSQL_KILLQUERY_FORMAT as MYSQL_KILL
-from .util_pg import PSQL_KILLQUERY_FORMAT_INCLUDING_DROPPED \
-    as PG_KILL
+from .util_pg import PSQL_KILLQUERY_FORMAT_INCLUDING_DROPPED as PG_KILL
 
-DB_ERROR_TUPLE = (sqlalchemy.exc.OperationalError,
-                  sqlalchemy.exc.InternalError,
-                  sqlalchemy.exc.ProgrammingError)
+DB_ERROR_TUPLE = (
+    sqlalchemy.exc.OperationalError,
+    sqlalchemy.exc.InternalError,
+    sqlalchemy.exc.ProgrammingError,
+)
 
 SCOPED_SESSION_MAKERS = {}
+
+
+try:
+    import secrets
+    scopefunc = secrets.token_hex
+except ImportError:
+    import random
+    scopefunc = random.random
+
 
 
 def copy_url(db_url):
@@ -81,6 +86,7 @@ def get_raw_autocommit_connection(url_or_engine_or_connection):
 
     if isinstance(x, string_types):
         import psycopg2
+
         c = psycopg2.connect(x)
         x = c
     elif isinstance(x, Engine):
@@ -88,12 +94,11 @@ def get_raw_autocommit_connection(url_or_engine_or_connection):
         sqla_connection.execution_options(isolation_level="AUTOCOMMIT")
         sqla_connection.detach()
         x = sqla_connection.connection.connection
-    elif hasattr(x, 'protocol_version'):
+    elif hasattr(x, "protocol_version"):
         # this is already a DBAPI connection object
         pass
     else:
-        raise \
-            ValueError('must pass a url or engine or DBAPI connection object')
+        raise ValueError("must pass a url or engine or DBAPI connection object")
     x.autocommit = True
     return x
 
@@ -151,10 +156,12 @@ def get_scoped_session_maker(*args, **kwargs):
     Creates a scoped session maker, and saves it for reuse next time.
 
     """
+
     tup = (args, frozenset(kwargs.items()))
     if tup not in SCOPED_SESSION_MAKERS:
-        SCOPED_SESSION_MAKERS[tup] = scoped_session(sessionmaker(
-            bind=create_engine(*args, **kwargs)))
+        SCOPED_SESSION_MAKERS[tup] = scoped_session(
+            sessionmaker(bind=create_engine(*args, **kwargs)), scopefunc=scopefunc
+        )
     return SCOPED_SESSION_MAKERS[tup]
 
 
@@ -203,27 +210,29 @@ def admin_db_connection(db_url):
     url = copy_url(db_url)
     dbtype = url.get_dialect().name
 
-    if dbtype == 'postgresql':
-        url.database = ''
+    if dbtype == "postgresql":
+        url.database = ""
 
         if not url.username:
             url.username = getpass.getuser()
 
-    elif not dbtype == 'sqlite':
+    elif not dbtype == "sqlite":
         url.database = None
 
-    if dbtype == 'postgresql':
-        with C(url, poolclass=NullPool, isolation_level='AUTOCOMMIT') as c:
+    if dbtype == "postgresql":
+        with C(url, poolclass=NullPool, isolation_level="AUTOCOMMIT") as c:
             yield c
 
-    elif dbtype == 'mysql':
+    elif dbtype == "mysql":
         with C(url, poolclass=NullPool) as c:
-            c.execute("""
+            c.execute(
+                """
                 SET sql_mode = 'ANSI';
-            """)
+            """
+            )
             yield c
 
-    elif dbtype == 'sqlite':
+    elif dbtype == "sqlite":
         with C(url, poolclass=NullPool) as c:
             yield c
 
@@ -231,27 +240,27 @@ def admin_db_connection(db_url):
 def _killquery(dbtype, dbname, hardkill):
     where = []
 
-    if dbtype == 'postgresql':
+    if dbtype == "postgresql":
         sql = PG_KILL
 
         if not hardkill:
             where.append("psa.state = 'idle'")
         if dbname:
-            where.append('datname = :databasename')
-    elif dbtype == 'mysql':
+            where.append("datname = :databasename")
+    elif dbtype == "mysql":
         sql = MYSQL_KILL
 
         if not hardkill:
             where.append("COMMAND = 'Sleep'")
         if dbname:
-            where.append('DB = :databasename')
+            where.append("DB = :databasename")
     else:
         raise NotImplementedError
 
-    where = ' and '.join(where)
+    where = " and ".join(where)
 
     if where:
-        sql += ' and {}'.format(where)
+        sql += " and {}".format(where)
     return sql
 
 
@@ -277,15 +286,15 @@ def kill_other_connections(s_or_c, dbname=None, hardkill=False):
     else:  # pragma: no cover
         results = c.execute(text(killquery))
 
-    if dbtype == 'mysql':
+    if dbtype == "mysql":
         for x in results:
-            kill = text('kill connection :pid')
+            kill = text("kill connection :pid")
 
             try:
                 c.execute(kill, pid=x.process_id)
             except sqlalchemy.exc.InternalError as e:  # pragma: no cover
                 code, message = e.orig.args
-                if 'Unknown thread id' in message:
+                if "Unknown thread id" in message:
                     pass
                 else:
                     raise

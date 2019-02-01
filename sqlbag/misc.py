@@ -1,9 +1,8 @@
-from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-from pathlib import Path
 import io
 import sys
+from pathlib import Path
 
 from .sqla import raw_execute
 
@@ -46,7 +45,7 @@ def sql_from_folder_iter(fpath):
     """
     folder = Path(fpath)
 
-    sql_files = sorted(folder.glob('**/*.sql'))
+    sql_files = sorted(folder.glob("**/*.sql"))
 
     for fpath in sql_files:
         sql = sql_from_file(fpath)
@@ -75,11 +74,11 @@ def load_sql_from_folder(s, fpath, verbose=False, out=None):
     if verbose:
         if not out:
             out = sys.stdout  # pragma: no cover
-        out.write('Running all .sql files in: {}'.format(fpath))
+        out.write("Running all .sql files in: {}".format(fpath))
 
     for fpath, text in sql_from_folder_iter(fpath):
         if verbose:
-            out.write('    Running SQL in: {}'.format(fpath))
+            out.write("    Running SQL in: {}".format(fpath))
         raw_execute(s, text)
 
 

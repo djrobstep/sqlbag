@@ -23,19 +23,17 @@ test:
 stest:
 	$(tcommand) $(tmessy) $(targs) tests
 
+fmt:
+	isort -rc .
+	black .
+
 clean:
-	git clean -fXd
 	find . -name \*.pyc -delete
+	rm -rf .cache
 
 lint:
 	flake8 sqlbag
 	flake8 tests
-
-docs:
-	cd docs && make clean && make html
-
-opendocs:
-	BROWSER=firefox python -c 'import os;import webbrowser;webbrowser.open_new_tab("file://" + os.getcwd() + "/docs/_build/html/index.html")'
 
 tidy: clean lint
 
