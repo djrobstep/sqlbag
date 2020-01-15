@@ -75,6 +75,7 @@ def test_parse_interval():
         "1 years 2 mons",
         "3 days 04:05:06",
         "-1 year -2 mons +3 days -04:05:06.2",
+        "1 day"
     ]
 
     ANSWERS = [
@@ -89,6 +90,7 @@ def test_parse_interval():
             seconds=6,
             microseconds=200000,
         ),
+        dict(days=1)
     ]
 
     for case, answer in zip(TEST_CASES, ANSWERS):

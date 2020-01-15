@@ -30,6 +30,7 @@ fmt:
 clean:
 	find . -name \*.pyc -delete
 	rm -rf .cache
+	rm -rf build dist
 
 lint:
 	flake8 sqlbag

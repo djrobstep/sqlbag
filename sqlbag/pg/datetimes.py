@@ -88,7 +88,7 @@ def parse_interval_values(s):
     values = {}
     [values.update(_) for _ in tokens_iter(s)]
 
-    for k in values:
+    for k in list(values):
         if not k.endswith("s"):
             values[k + "s"] = values.pop(k)
     return values
