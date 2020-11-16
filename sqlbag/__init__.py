@@ -28,6 +28,7 @@ from .sqla import (
     raw_connection,
     get_raw_autocommit_connection,
     copy_url,
+    alter_url,
     connection_from_s_or_c,
     C,
 )  # noqa

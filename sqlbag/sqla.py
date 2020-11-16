@@ -5,7 +5,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import copy
 import getpass
 from contextlib import contextmanager
+from packaging import version
 
+import sqlalchemy
 import sqlalchemy.engine.url
 import sqlalchemy.exc
 import sqlalchemy.orm
@@ -29,6 +31,8 @@ DB_ERROR_TUPLE = (
 
 SCOPED_SESSION_MAKERS = {}
 
+SQLA14 = version.parse(sqlalchemy.__version__) >= version.parse('1.4.0b1')
+
 
 try:
     import secrets
@@ -36,7 +40,6 @@ try:
 except ImportError:
     import random
     scopefunc = random.random
-
 
 
 def copy_url(db_url):
@@ -50,6 +53,25 @@ def copy_url(db_url):
     """
     return copy.copy(make_url(db_url))
 
+
+def alter_url(db_url, **kwargs):
+    """
+    Args:
+        db_url: Already existing SQLAlchemy :class:`URL`, or URL string.
+        **kwargs: Attributes to modify
+    Returns:
+        A brand new SQLAlchemy :class:`URL`.
+
+    Return a copy of a SQLALchemy :class:`URL` with some modifications.
+    """
+    db_url = make_url(db_url)
+    if SQLA14:
+        return db_url.set(**kwargs)
+    else:
+        db_url = copy.copy(db_url)
+        for k, v in kwargs.items():
+            setattr(db_url, k, v)
+        return db_url
 
 def connection_from_s_or_c(s_or_c):
     """Args:
@@ -207,17 +229,17 @@ def C(*args, **kwargs):
 
 @contextmanager
 def admin_db_connection(db_url):
-    url = copy_url(db_url)
+    url = make_url(db_url)
     dbtype = url.get_dialect().name
 
     if dbtype == "postgresql":
-        url.database = ""
+        url = alter_url(url, database='')
 
         if not url.username:
-            url.username = getpass.getuser()
+            url = alter_url(url, username=getpass.getuser())
 
     elif not dbtype == "sqlite":
-        url.database = None
+        url = alter_url(url, database='')
 
     if dbtype == "postgresql":
         with C(url, poolclass=NullPool, isolation_level="AUTOCOMMIT") as c:
@@ -292,7 +314,7 @@ def kill_other_connections(s_or_c, dbname=None, hardkill=False):
 
             try:
                 c.execute(kill, pid=x.process_id)
-            except sqlalchemy.exc.InternalError as e:  # pragma: no cover
+            except DB_ERROR_TUPLE as e:  # pragma: no cover
                 code, message = e.orig.args
                 if "Unknown thread id" in message:
                     pass

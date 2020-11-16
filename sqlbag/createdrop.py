@@ -16,13 +16,13 @@ from sqlbag import quoted_identifier
 from .sqla import (
     admin_db_connection,
     connection_from_s_or_c,
-    copy_url,
+    make_url,
     kill_other_connections,
 )
 
 
 def database_exists(db_url, test_can_select=False):
-    url = copy_url(db_url)
+    url = make_url(db_url)
     name = url.database
     db_type = url.get_dialect().name
 
@@ -50,7 +50,7 @@ def can_select(url):
 def _database_exists(session_or_connection, name):
     c = connection_from_s_or_c(session_or_connection)
     e = copy.copy(c.engine)
-    url = copy_url(e.url)
+    url = make_url(e.url)
     dbtype = url.get_dialect().name
 
     if dbtype == "postgresql":
@@ -76,7 +76,7 @@ def _database_exists(session_or_connection, name):
 
 
 def create_database(db_url, template=None, wipe_if_existing=False):
-    target_url = copy_url(db_url)
+    target_url = make_url(db_url)
     dbtype = target_url.get_dialect().name
 
     if wipe_if_existing:
@@ -107,7 +107,7 @@ def create_database(db_url, template=None, wipe_if_existing=False):
 
 
 def drop_database(db_url):
-    url = copy_url(db_url)
+    url = make_url(db_url)
 
     dbtype = url.get_dialect().name
     name = url.database
