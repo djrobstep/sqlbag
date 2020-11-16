@@ -314,7 +314,7 @@ def kill_other_connections(s_or_c, dbname=None, hardkill=False):
 
             try:
                 c.execute(kill, pid=x.process_id)
-            except sqlalchemy.exc.InternalError as e:  # pragma: no cover
+            except DB_ERROR_TUPLE as e:  # pragma: no cover
                 code, message = e.orig.args
                 if "Unknown thread id" in message:
                     pass
