@@ -15,7 +15,10 @@ setup(
     long_description=readme,
     author="Robert Lechte",
     author_email="robertlechte@gmail.com",
-    install_requires=["pathlib", "six", "sqlalchemy"],
+    install_requires=[
+        "pathlib; python_version<'3'",
+        "six",
+        "sqlalchemy"],
     zip_safe=False,
     packages=find_packages(),
     classifiers=["Development Status :: 3 - Alpha"],
