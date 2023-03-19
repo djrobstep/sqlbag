@@ -1,4 +1,5 @@
 from flask import Flask
+from sqlalchemy import text
 
 from sqlbag.flask import FS, proxies, session_setup
 
@@ -18,7 +19,7 @@ app = get_app()
 @app.route("/")
 def hello():
     # returns 'Hello World!' as a response
-    return s.execute("select 'Hello world!'").scalar()
+    return s.execute(text("select 'Hello world!'")).scalar()
 
 
 if __name__ == "__main__":

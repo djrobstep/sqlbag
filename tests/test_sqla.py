@@ -5,7 +5,7 @@ import os
 
 import psycopg2
 from pytest import raises
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import ProgrammingError
 
 from common import db  # flake8: noqa
@@ -59,12 +59,12 @@ def test_basic(db, tmpdir):
     s.close()
 
     with C(url) as c:
-        c.execute("select 1")
+        c.execute(text("select 1"))
         core_to_raw = raw_connection(c)
 
     with raises(ProgrammingError):
         with C(url) as c:
-            c.execute("select bad")
+            c.execute(text("select bad"))
 
     with admin_db_connection("sqlite://") as c:
         pass
@@ -73,7 +73,7 @@ def test_basic(db, tmpdir):
         url = copy_url(mysql_url)
 
         with S(mysql_url) as s:
-            s.execute("select 1")
+            s.execute(text("select 1"))
 
         with admin_db_connection(mysql_url) as c:
             kq = _killquery(url.get_dialect().name, None, True)
@@ -132,6 +132,6 @@ import secrets
 
 def test_transaction_separation(db):
     with S(db) as s1, S(db) as s2:
-        id1 = s1.execute('select txid_current()').fetchall()[0][0]
-        id2 = s2.execute('select txid_current()').fetchall()[0][0]
+        id1 = s1.execute(text('select txid_current()')).fetchall()[0][0]
+        id2 = s2.execute(text('select txid_current()')).fetchall()[0][0]
         assert id1 != id2
