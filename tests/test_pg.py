@@ -166,26 +166,26 @@ def test_pendulum_for_time_types(db):
                 ts timestamp,
                 tstz timestamptz,
                 d date,
-                t time,
+                ti time,
                 i interval)
         """
         ))
 
         s.execute(text(
             """
-            insert into dt(ts, tstz, d, t, i)
+            insert into dt(ts, tstz, d, ti, i)
             values
             (:ts,
             :tstz,
             :d,
-            :t,
+            :ti,
             :i)
         """),
             {
                 "ts": vanilla(t),
                 "tstz": t.in_timezone("Australia/Sydney"),
                 "d": t.date(),
-                "t": t.time(),
+                "ti": t.time(),
                 "i": i,
             },
         )
@@ -195,7 +195,7 @@ def test_pendulum_for_time_types(db):
         assert out.ts == naive(t.in_tz("UTC"))
         assert out.tstz == t.in_timezone("UTC")
         assert out.d == t.date()
-        assert out.t == t.time()
+        assert out.ti == t.time()
         assert out.i == i
 
         result = s.execute(text(
