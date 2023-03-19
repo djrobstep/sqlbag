@@ -46,7 +46,7 @@ def FS(*args, **kwargs):
 
     and make sure you've called `session_setup` somewhere in your init code also. After that, simply use it in your route methods like so:
 
-    >>> results = s.execute('select a from b')
+    >>> results = s.execute(text('select a from b'))
 
     all usages of this `s` object within the same request will use this same session.
     """

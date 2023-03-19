@@ -153,7 +153,7 @@ def S(*args, **kwargs):
     .. code-block:: python
 
         with S('postgresql:///databasename') as s:
-            s.execute('select 1;')
+            s.execute(text('select 1;'))
 
     Does `commit()` on close, `rollback()` on exception.
 
@@ -248,9 +248,11 @@ def admin_db_connection(db_url):
     elif dbtype == "mysql":
         with C(url, poolclass=NullPool) as c:
             c.execute(
-                """
+                text(
+                    """
                 SET sql_mode = 'ANSI';
             """
+                )
             )
             yield c
 
@@ -304,7 +306,7 @@ def kill_other_connections(s_or_c, dbname=None, hardkill=False):
     killquery = _killquery(dbtype, dbname=dbname, hardkill=hardkill)
 
     if dbname:
-        results = c.execute(text(killquery), databasename=dbname)
+        results = c.execute(text(killquery), dict(databasename=dbname))
     else:  # pragma: no cover
         results = c.execute(text(killquery))
 
@@ -313,7 +315,7 @@ def kill_other_connections(s_or_c, dbname=None, hardkill=False):
             kill = text("kill connection :pid")
 
             try:
-                c.execute(kill, pid=x.process_id)
+                c.execute(kill, dict(pid=x.process_id))
             except DB_ERROR_TUPLE as e:  # pragma: no cover
                 code, message = e.orig.args
                 if "Unknown thread id" in message:

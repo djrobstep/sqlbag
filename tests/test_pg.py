@@ -6,8 +6,10 @@ from datetime import datetime, timedelta, tzinfo
 import pendulum
 from dateutil.relativedelta import relativedelta
 from pytest import raises
+from sqlalchemy import text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.pool import NullPool
+import psycopg2.extensions
 
 from common import db  # flake8: noqa
 from sqlbag import DB_ERROR_TUPLE, S, copy_url, raw_connection
@@ -43,7 +45,7 @@ def test_errors_and_messages(db):
     assert pg_errorname_lookup(22005) == "ERROR_IN_ASSIGNMENT"
 
     with S(db) as s:
-        s.execute("drop table if exists x")
+        s.execute(text("drop table if exists x"))
         assert pg_notices(s) == ['NOTICE:  table "x" does not exist, skipping\n']
         assert pg_notices(s, wipe=True) == [
             'NOTICE:  table "x" does not exist, skipping\n'
@@ -51,7 +53,7 @@ def test_errors_and_messages(db):
         assert pg_notices(s) == []
 
         out = io.StringIO()
-        s.execute("drop table if exists x")
+        s.execute(text("drop table if exists x"))
         pg_print_notices(s, out=out)
 
         assert out.getvalue() == 'NOTICE:  table "x" does not exist, skipping'
@@ -61,11 +63,11 @@ def test_errors_and_messages(db):
 
         assert out.getvalue() == ""
 
-        s.execute("create table x(id text)")
+        s.execute(text("create table x(id text)"))
 
     try:
         with S(db) as s:
-            s.execute("create table x(id text)")
+            s.execute(text("create table x(id text)"))
     except DB_ERROR_TUPLE as e:
         assert errorcode_from_error(e) == "42P07"
 
@@ -158,45 +160,45 @@ def test_pendulum_for_time_types(db):
 
         use_pendulum_for_time_types()
 
-        s.execute(
+        s.execute(text(
             """
             create temporary table dt(
                 ts timestamp,
                 tstz timestamptz,
                 d date,
-                t time,
+                ti time,
                 i interval)
         """
-        )
+        ))
 
-        s.execute(
+        s.execute(text(
             """
-            insert into dt(ts, tstz, d, t, i)
+            insert into dt(ts, tstz, d, ti, i)
             values
             (:ts,
             :tstz,
             :d,
-            :t,
+            :ti,
             :i)
-        """,
+        """),
             {
                 "ts": vanilla(t),
                 "tstz": t.in_timezone("Australia/Sydney"),
                 "d": t.date(),
-                "t": t.time(),
+                "ti": t.time(),
                 "i": i,
             },
         )
 
-        out = list(s.execute("""select * from dt"""))[0]
+        out = list(s.execute(text("""select * from dt""")))[0]
 
         assert out.ts == naive(t.in_tz("UTC"))
         assert out.tstz == t.in_timezone("UTC")
         assert out.d == t.date()
-        assert out.t == t.time()
+        assert out.ti == t.time()
         assert out.i == i
 
-        result = s.execute(
+        result = s.execute(text(
             """
             select
                 null::timestamp,
@@ -205,7 +207,7 @@ def test_pendulum_for_time_types(db):
                 null::time,
                 null::interval
         """
-        )
+        ))
 
         out = list(result)[0]
         assert list(out) == [None, None, None, None, None]

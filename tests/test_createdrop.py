@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from sqlalchemy import text
+
 from sqlbag import (
     S,
     create_database,
@@ -59,4 +61,4 @@ def test_createdrop(tmpdir):
 
     with temporary_database("sqlite") as dburi:
         with S(dburi) as s:
-            s.execute("select 1")
+            s.execute(text("select 1"))

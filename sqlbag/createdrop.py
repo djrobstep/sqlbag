@@ -8,8 +8,9 @@ import string
 import tempfile
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import InternalError, OperationalError, ProgrammingError
+from sqlalchemy.engine.base import Connection
 
 from sqlbag import quoted_identifier
 
@@ -36,12 +37,13 @@ def database_exists(db_url, test_can_select=False):
 
 
 def can_select(url):
-    text = "select 1"
+    select1 = text("select 1")
 
     e = create_engine(url)
 
     try:
-        e.execute(text)
+        with e.begin() as c:
+            c.execute(select1)
         return True
     except (ProgrammingError, OperationalError, InternalError):
         return False
@@ -54,23 +56,27 @@ def _database_exists(session_or_connection, name):
     dbtype = url.get_dialect().name
 
     if dbtype == "postgresql":
-        EXISTENCE = """
+        EXISTENCE = text(
+            """
             SELECT 1
             FROM pg_catalog.pg_database
-            WHERE datname = %s
+            WHERE datname = :name
         """
+        )
 
-        result = c.execute(EXISTENCE, (name,)).scalar()
+        result = c.execute(EXISTENCE, dict(name=name)).scalar()
 
         return bool(result)
     elif dbtype == "mysql":
-        EXISTENCE = """
+        EXISTENCE = text(
+            """
             SELECT SCHEMA_NAME
             FROM INFORMATION_SCHEMA.SCHEMATA
-            WHERE SCHEMA_NAME = %s
+            WHERE SCHEMA_NAME = :name
         """
+        )
 
-        result = c.execute(EXISTENCE, (name,)).scalar()
+        result = c.execute(EXISTENCE, dict(name=name)).scalar()
 
         return bool(result)
 
@@ -97,10 +103,12 @@ def create_database(db_url, template=None, wipe_if_existing=False):
                 t = ""
 
             c.execute(
-                """
+                text(
+                    """
                 create database {} {};
             """.format(
-                    quoted_identifier(target_url.database), t
+                        quoted_identifier(target_url.database), t
+                    )
                 )
             )
         return True
@@ -124,16 +132,18 @@ def drop_database(db_url):
                 if dbtype == "postgresql":
 
                     REVOKE = "revoke connect on database {} from public"
-                    revoke = REVOKE.format(quoted_identifier(name))
+                    revoke = text(REVOKE.format(quoted_identifier(name)))
                     c.execute(revoke)
 
                 kill_other_connections(c, name, hardkill=True)
 
                 c.execute(
-                    """
+                    text(
+                        """
                     drop database if exists {};
                 """.format(
-                        quoted_identifier(name)
+                            quoted_identifier(name)
+                        )
                     )
                 )
             return True
